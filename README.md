@@ -49,15 +49,25 @@ too and the file is left unsaved; the editor shows its usual save error.
 
 ## Build from source
 
-Needs the Xcode command line tools.
+Needs the Xcode command line tools and CMake 3.20 or later. The build uses no
+network.
 
 ```
-make             # build AdminSave.dylib (universal)
-make test        # self-check, no prompts
-make test-auth   # self-check of the admin save; three prompts (Touch ID or password)
-make install     # copy into the Nextpad++ plugins folder
-make zip         # release archive in dist/
+cmake -S . -B build && cmake --build build
 ```
+
+That produces `build/AdminSave.dylib`: universal (Apple Silicon and Intel),
+macOS 11 or later, with the version recorded in the file.
+
+```
+ctest --test-dir build                    # self-check, no prompts
+cmake --build build --target test-auth    # self-check of the admin save; three prompts (Touch ID or password)
+cmake --install build                     # copy into the Nextpad++ plugins folder; quit Nextpad++ first
+cmake --build build --target zip          # release archive in build/zip/
+```
+
+Layout: the plugin is `src/AdminSave.mm`, the self-check is `test/test.mm`,
+and `vendor/` holds the Nextpad++ plugin interface header.
 
 ## How it works
 
@@ -68,6 +78,9 @@ copy it over the target as root, in place, then compare the bytes.
 
 Root access comes from `sudo` (Touch ID through `pam_tid`), with the system
 password dialog as a fallback.
+
+[SECURITY.md](SECURITY.md) lists everything the plugin executes, reads, writes
+and stores. It makes no network connections.
 
 ## Known limitations
 
@@ -90,11 +103,10 @@ password dialog as a fallback.
 
 The plugin's own source code is under the MIT license, see [LICENSE](LICENSE).
 
-`NppPluginInterfaceMac.h` is an unmodified copy of the plugin interface header
-from [Nextpad++](https://github.com/nextpad-plus-plus/nextpad-plus-plus-macos),
+`vendor/NppPluginInterfaceMac.h` is an unmodified copy of the plugin interface
+header from [Nextpad++](https://github.com/nextpad-plus-plus/nextpad-plus-plus-macos),
 Copyright (C) 2026 Andrey Letov. It remains under that project's license,
-GPL-3.0; the full text is in
-[licenses/Nextpad++-LICENSE.txt](licenses/Nextpad++-LICENSE.txt).
+GPL-3.0; the full text is in [vendor/LICENSE](vendor/LICENSE).
 
 Binary releases are built with that header, so they are distributed under the
 terms of the GPL-3.0. The complete source is in this repository.
